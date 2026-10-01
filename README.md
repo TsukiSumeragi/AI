@@ -7,7 +7,7 @@ graph TD
     End([SELESAI: Rute Ditampilkan di Dasbor])
 
     %% --- Input/Output Sections ---
-    subgraph Input_Data [Fase 1: Analisis & Input (SKPL-F01, F02, F03, F04)]
+    subgraph Input_Data ["Fase 1: Analisis & Input (SKPL-F01, F02, F03, F04)"]
         InputDepot[<center>Input Koordinat Depot Awal<br/>(Lat, Lon)</center>]
         InputDest[<center>Input Daftar Destinasi & Bobot Paket<br/>(CSV/Manual)</center>]
         InputVehCap[<center>Atur Kapasitas Max Kendaraan<br/>(kg)</center>]
@@ -15,16 +15,16 @@ graph TD
     end
 
     %% --- Process Section - Pre-Processing ---
-    subgraph Pre_Processing [Fase 2: Pra-pemrosesan Data]
+    subgraph Pre_Processing ["Fase 2: Pra-pemrosesan Data"]
         CalcMatrix[<center>Hitung Matriks Jarak Geospasial<br/>(Formula Haversine/Geodesic)</center>]
     end
 
     %% --- Process Section - Core AI (GA) ---
-    subgraph GA_Engine [Fase 3: Mesin Optimasi Genetika (SKPL-F05)]
+    subgraph GA_Engine ["Fase 3: Mesin Optimasi Genetika (SKPL-F05)"]
         InitPop[<center>Inisialisasi Populasi Awal<br/>(Giant TSP Tour - Permutation Encoding)</center>]
         GenLimit{Kriteria Berhenti<br/>Terpenuhi?<br/>(Generasi Max / Konvergen)}
         
-        subgraph GA_Loop [Siklus Evolusi]
+        subgraph GA_Loop ["Siklus Evolusi"]
             %% Split & CVRP handling
             SplitAlg[<center>Jalankan <b>Split Algorithm</b><br/>(Ubah Giant Tour jadi rute CVRP mandiri<br/>berdasarkan Kapasitas Kendaraan)</center>]
             
@@ -46,7 +46,7 @@ graph TD
     end
 
     %% --- Output/Visualization Section ---
-    subgraph Output_Vis [Fase 4: Implementasi & Visualisasi (SKPL-F06, F07)]
+    subgraph Output_Vis ["Fase 4: Implementasi & Visualisasi (SKPL-F06, F07)"]
         GetBestR[<center>Ekstrak Kandidat Rute Optimum Global</center>]
         ExtMetrics[<center>Kalkulasi Metrik Operasional<br/>(Jarak, Waktu, Biaya BBM)</center>]
         RenderMap[<center>Rendering Peta Interaktif <b>Folium</b><br/>(Polyline Rute, Marker Destinasi,<br/>Polygon Overlay Zona Horor)</center>]
