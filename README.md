@@ -3,84 +3,61 @@
 ```mermaid
 graph TD
     %% --- Start/End Nodes ---
-    Start(["MULAI: Pengguna Membuka Aplikasi Streamlit"])
-    End(["SELESAI: Rute Ditampilkan di Dasbor"])
+    Start(["MULAI: Pengguna Membuka Aplikasi (Streamlit)"])
+    End(["SELESAI: Jadwal & Rute Ditampilkan di Dasbor"])
 
-    %% --- Input/Output Sections ---
-    subgraph Input_Data ["Fase 1: Analisis & Input (SKPL-F01, F02, F03, F04)"]
-        InputDepot["<center>Input Koordinat Depot Awal<br/>(Lat, Lon)</center>"]
-        InputDest["<center>Input Daftar Destinasi & Bobot Paket<br/>(CSV/Manual)</center>"]
-        InputVehCap["<center>Atur Kapasitas Max Kendaraan<br/>(kg)</center>"]
-        InputHazard["<center>Definisikan Koordinat Poligon<br/>Zona Horor Parung Panjang</center>"]
+    %% --- Input Sections ---
+    subgraph Input_Data ["Input Data"]
+        InputDepot["Input Koordinat Depot Awal"]
+        InputDest["Dataset CSV (id, latitude, longitude, demand)"]
+        InputVehCap["Input Batas Kapasitas Muatan Armada"]
+        InputHazard["Dataset GeoJSON Poligon Zona Macet (Tol Bitung)"]
     end
 
-    %% --- Process Section - Pre-Processing ---
-    subgraph Pre_Processing ["Fase 2: Pra-pemrosesan Data"]
-        CalcMatrix["<center>Hitung Matriks Jarak Geospasial<br/>(Formula Haversine/Geodesic)</center>"]
-    end
-
-    %% --- Process Section - Core AI (GA) ---
-    subgraph GA_Engine ["Fase 3: Mesin Optimasi Genetika (SKPL-F05)"]
-        InitPop["<center>Inisialisasi Populasi Awal<br/>(Giant TSP Tour - Permutation Encoding)</center>"]
-        GenLimit{"Kriteria Berhenti<br/>Terpenuhi?<br/>(Generasi Max / Konvergen)"}
+    %% --- Process Section - Core AI (DEAP) ---
+    subgraph GA_Engine ["Proses AI (Algoritma Genetika)"]
+        InitPop["Inisialisasi Kromosom (Giant TSP Tour)"]
+        GenLimit{"Kriteria Berhenti<br/>Terpenuhi?"}
         
         subgraph GA_Loop ["Siklus Evolusi"]
-            %% Split & CVRP handling
-            SplitAlg["<center>Jalankan <b>Split Algorithm</b><br/>(Ubah Giant Tour jadi rute CVRP mandiri<br/>berdasarkan Kapasitas Kendaraan)</center>"]
-            
-            %% Fitness Evaluation including Penalties
-            EvalFitness["<center>Evaluasi Nilai Kebugaran <b>(Fitness Function)</b></center>"]
-            CalcFuel["<center>Hitung Estimasi Cost BBM<br/>(Model LFCM - Beban & Jarak)</center>"]
-            CheckHazard{"Garis Rute<br/>Memotong Poligon<br/>Parung Panjang?"}
-            
-            %% Penalty Application
-            AddPenaltyQ["<center>Terapkan <b>Penalty Capacity</b><br/>pada Fitness</center>"]
-            AddPenaltyH["<center>Terapkan <b>Penalty Hazard</b> Ekstrem<br/>pada Fitness</center>"]
-            
-            %% Genetic Operators
-            SelectParents["<center>Seleksi Induk<br/>(Tournament Selection)</center>"]
-            CrossoverOp["<center>Pindah Silang<br/>(Order Crossover / PMX)</center>"]
-            MutationOp["<center>Mutasi<br/>(Swap Mutation &lt; 5%)</center>"]
-            CreateOffspring["<center>Bentuk Generasi Baru</center>"]
+            SplitAlg["Pemotongan Kromosom Berdasarkan Kapasitas Kendaraan"]
+            EvalFitness["Evaluasi Fitness (Jarak Pendek & Hemat BBM)"]
+            CheckHazard{"Rute Memotong Poligon Tol Bitung?"}
+            AddPenaltyH["Turunkan Nilai Fitness (Penalti Berat)"]
+            CrossoverOp["Crossover (Kawin Silang Antar Rute Terbaik)"]
+            MutationOp["Mutasi (Modifikasi Acak Urutan Titik Kunjungan)"]
+            CreateOffspring["Hasilkan Generasi Baru"]
         end
     end
 
     %% --- Output/Visualization Section ---
-    subgraph Output_Vis ["Fase 4: Implementasi & Visualisasi (SKPL-F06, F07)"]
-        GetBestR["<center>Ekstrak Kandidat Rute Optimum Global</center>"]
-        ExtMetrics["<center>Kalkulasi Metrik Operasional<br/>(Jarak, Waktu, Biaya BBM)</center>"]
-        RenderMap["<center>Rendering Peta Interaktif <b>Folium</b><br/>(Polyline Rute, Marker Destinasi,<br/>Polygon Overlay Zona Horor)</center>"]
-        UpdateDash["<center>Update Dasbor <b>Streamlit</b><br/>(Tampilkan Metrik & Peta)</center>"]
+    subgraph Output_Vis ["Output (Streamlit & Folium)"]
+        GetBestR["Ekstrak Jadwal Rute Kurir Terbaik & Estimasi Waktu"]
+        RenderMap["Visualisasi Garis Lintasan pada Peta Digital"]
     end
 
     %% --- Connectors ---
     Start --> Input_Data
-    Input_Data --> CalcMatrix
-    CalcMatrix --> InitPop
+    Input_Data --> InitPop
     InitPop --> GenLimit
     
     %% Loop Logic
     GenLimit -- Tidak --> SplitAlg
     SplitAlg --> EvalFitness
-    EvalFitness --> CalcFuel
-    CalcFuel --> CheckHazard
+    EvalFitness --> CheckHazard
     CheckHazard -- Ya --> AddPenaltyH
-    AddPenaltyH --> AddPenaltyQ
-    CheckHazard -- Tidak --> AddPenaltyQ
-    AddPenaltyQ --> SelectParents
-    SelectParents --> CrossoverOp
+    AddPenaltyH --> CrossoverOp
+    CheckHazard -- Tidak --> CrossoverOp
     CrossoverOp --> MutationOp
     MutationOp --> CreateOffspring
-    CreateOffspring -- "Generasi Berikutnya" --> GenLimit
+    CreateOffspring --> GenLimit
     
     %% Termination Logic
     GenLimit -- Ya --> GetBestR
-    GetBestR --> ExtMetrics
-    ExtMetrics --> RenderMap
-    RenderMap --> UpdateDash
-    UpdateDash --> End
+    GetBestR --> RenderMap
+    RenderMap --> End
 
-    %% Styling for clarity
+    %% Styling
     classDef process fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
     classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
     classDef inputout fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
@@ -88,8 +65,8 @@ graph TD
     classDef startend fill:#ffccbc,stroke:#bf360c,stroke-width:2px,rx:10,ry:10;
 
     class Start,End startend;
-    class InputDepot,InputDest,InputVehCap,InputHazard inputout;
-    class CalcMatrix,InitPop,SplitAlg,EvalFitness,CalcFuel,AddPenaltyQ,AddPenaltyH,SelectParents,CrossoverOp,MutationOp,CreateOffspring,GetBestR,ExtMetrics,RenderMap,UpdateDash process;
+    class InputDepot,InputDest,InputVehCap,InputHazard,GetBestR,RenderMap inputout;
+    class InitPop,SplitAlg,EvalFitness,AddPenaltyH,CrossoverOp,MutationOp,CreateOffspring process;
     class GenLimit,CheckHazard decision;
     class GA_Loop loopsub;
 ```
