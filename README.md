@@ -3,54 +3,54 @@
 ```mermaid
 graph TD
     %% --- Start/End Nodes ---
-    Start([MULAI: Pengguna Membuka Aplikasi Streamlit])
-    End([SELESAI: Rute Ditampilkan di Dasbor])
+    Start(["MULAI: Pengguna Membuka Aplikasi Streamlit"])
+    End(["SELESAI: Rute Ditampilkan di Dasbor"])
 
     %% --- Input/Output Sections ---
     subgraph Input_Data ["Fase 1: Analisis & Input (SKPL-F01, F02, F03, F04)"]
-        InputDepot[<center>Input Koordinat Depot Awal<br/>(Lat, Lon)</center>]
-        InputDest[<center>Input Daftar Destinasi & Bobot Paket<br/>(CSV/Manual)</center>]
-        InputVehCap[<center>Atur Kapasitas Max Kendaraan<br/>(kg)</center>]
-        InputHazard[<center>Definisikan Koordinat Poligon<br/>Zona Horor Parung Panjang</center>]
+        InputDepot["<center>Input Koordinat Depot Awal<br/>(Lat, Lon)</center>"]
+        InputDest["<center>Input Daftar Destinasi & Bobot Paket<br/>(CSV/Manual)</center>"]
+        InputVehCap["<center>Atur Kapasitas Max Kendaraan<br/>(kg)</center>"]
+        InputHazard["<center>Definisikan Koordinat Poligon<br/>Zona Horor Parung Panjang</center>"]
     end
 
     %% --- Process Section - Pre-Processing ---
     subgraph Pre_Processing ["Fase 2: Pra-pemrosesan Data"]
-        CalcMatrix[<center>Hitung Matriks Jarak Geospasial<br/>(Formula Haversine/Geodesic)</center>]
+        CalcMatrix["<center>Hitung Matriks Jarak Geospasial<br/>(Formula Haversine/Geodesic)</center>"]
     end
 
     %% --- Process Section - Core AI (GA) ---
     subgraph GA_Engine ["Fase 3: Mesin Optimasi Genetika (SKPL-F05)"]
-        InitPop[<center>Inisialisasi Populasi Awal<br/>(Giant TSP Tour - Permutation Encoding)</center>]
-        GenLimit{Kriteria Berhenti<br/>Terpenuhi?<br/>(Generasi Max / Konvergen)}
+        InitPop["<center>Inisialisasi Populasi Awal<br/>(Giant TSP Tour - Permutation Encoding)</center>"]
+        GenLimit{"Kriteria Berhenti<br/>Terpenuhi?<br/>(Generasi Max / Konvergen)"}
         
         subgraph GA_Loop ["Siklus Evolusi"]
             %% Split & CVRP handling
-            SplitAlg[<center>Jalankan <b>Split Algorithm</b><br/>(Ubah Giant Tour jadi rute CVRP mandiri<br/>berdasarkan Kapasitas Kendaraan)</center>]
+            SplitAlg["<center>Jalankan <b>Split Algorithm</b><br/>(Ubah Giant Tour jadi rute CVRP mandiri<br/>berdasarkan Kapasitas Kendaraan)</center>"]
             
             %% Fitness Evaluation including Penalties
-            EvalFitness[<center>Evaluasi Nilai Kebugaran <b>(Fitness Function)</b></center>]
-            CalcFuel[<center>Hitung Estimasi Cost BBM<br/>(Model LFCM - Beban & Jarak)</center>]
-            CheckHazard{Garis Rute<br/>Memotong Poligon<br/>Parung Panjang?}
+            EvalFitness["<center>Evaluasi Nilai Kebugaran <b>(Fitness Function)</b></center>"]
+            CalcFuel["<center>Hitung Estimasi Cost BBM<br/>(Model LFCM - Beban & Jarak)</center>"]
+            CheckHazard{"Garis Rute<br/>Memotong Poligon<br/>Parung Panjang?"}
             
             %% Penalty Application
-            AddPenaltyQ[<center>Terapkan <b>Penalty Capacity</b><br/>pada Fitness</center>]
-            AddPenaltyH[<center>Terapkan <b>Penalty Hazard</b> Ekstrem<br/>pada Fitness</center>]
+            AddPenaltyQ["<center>Terapkan <b>Penalty Capacity</b><br/>pada Fitness</center>"]
+            AddPenaltyH["<center>Terapkan <b>Penalty Hazard</b> Ekstrem<br/>pada Fitness</center>"]
             
             %% Genetic Operators
-            SelectParents[<center>Seleksi Induk<br/>(Tournament Selection)</center>]
-            CrossoverOp[<center>Pindah Silang<br/>(Order Crossover / PMX)</center>]
-            MutationOp[<center>Mutasi<br/>(Swap Mutation < 5%)</center>]
-            CreateOffspring[<center>Bentuk Generasi Baru</center>]
+            SelectParents["<center>Seleksi Induk<br/>(Tournament Selection)</center>"]
+            CrossoverOp["<center>Pindah Silang<br/>(Order Crossover / PMX)</center>"]
+            MutationOp["<center>Mutasi<br/>(Swap Mutation &lt; 5%)</center>"]
+            CreateOffspring["<center>Bentuk Generasi Baru</center>"]
         end
     end
 
     %% --- Output/Visualization Section ---
     subgraph Output_Vis ["Fase 4: Implementasi & Visualisasi (SKPL-F06, F07)"]
-        GetBestR[<center>Ekstrak Kandidat Rute Optimum Global</center>]
-        ExtMetrics[<center>Kalkulasi Metrik Operasional<br/>(Jarak, Waktu, Biaya BBM)</center>]
-        RenderMap[<center>Rendering Peta Interaktif <b>Folium</b><br/>(Polyline Rute, Marker Destinasi,<br/>Polygon Overlay Zona Horor)</center>]
-        UpdateDash[<center>Update Dasbor <b>Streamlit</b><br/>(Tampilkan Metrik & Peta)</center>]
+        GetBestR["<center>Ekstrak Kandidat Rute Optimum Global</center>"]
+        ExtMetrics["<center>Kalkulasi Metrik Operasional<br/>(Jarak, Waktu, Biaya BBM)</center>"]
+        RenderMap["<center>Rendering Peta Interaktif <b>Folium</b><br/>(Polyline Rute, Marker Destinasi,<br/>Polygon Overlay Zona Horor)</center>"]
+        UpdateDash["<center>Update Dasbor <b>Streamlit</b><br/>(Tampilkan Metrik & Peta)</center>"]
     end
 
     %% --- Connectors ---
