@@ -56,46 +56,34 @@ erDiagram
 
 ```mermaid
 graph TD
-    %% --- Start/End Nodes ---
-    Start(["MULAI: Pengguna Membuka Aplikasi (Streamlit)"])
-    End(["SELESAI: Jadwal & Rute Ditampilkan di Dasbor"])
-
-    %% --- Input Sections ---
-    subgraph Input_Data ["Input Data"]
-        InputDepot["Input Koordinat Depot Awal"]
-        InputDest["Dataset CSV (id, latitude, longitude, demand)"]
-        InputVehCap["Input Batas Kapasitas Muatan Armada"]
-        InputHazard["Dataset GeoJSON Poligon Zona Macet (Tol Bitung)"]
-    end
-
-    %% --- Process Section - Core AI (DEAP) ---
-    subgraph GA_Engine ["Proses AI (Algoritma Genetika)"]
-        InitPop["Inisialisasi Kromosom (Giant TSP Tour)"]
-        GenLimit{"Kriteria Berhenti<br/>Terpenuhi?"}
-        
-        subgraph GA_Loop ["Siklus Evolusi"]
-            SplitAlg["Pemotongan Kromosom Berdasarkan Kapasitas Kendaraan"]
-            EvalFitness["Evaluasi Fitness (Jarak Pendek & Hemat BBM)"]
-            CheckHazard{"Rute Memotong Poligon Tol Bitung?"}
-            AddPenaltyH["Turunkan Nilai Fitness (Penalti Berat)"]
-            CrossoverOp["Crossover (Kawin Silang Antar Rute Terbaik)"]
-            MutationOp["Mutasi (Modifikasi Acak Urutan Titik Kunjungan)"]
-            CreateOffspring["Hasilkan Generasi Baru"]
-        end
-    end
-
-    %% --- Output/Visualization Section ---
-    subgraph Output_Vis ["Output (Streamlit & Folium)"]
-        GetBestR["Ekstrak Jadwal Rute Kurir Terbaik & Estimasi Waktu"]
-        RenderMap["Visualisasi Garis Lintasan pada Peta Digital"]
-    end
-
-    %% --- Connectors ---
-    Start --> Input_Data
-    Input_Data --> InitPop
-    InitPop --> GenLimit
+    Start(["MULAI: Pengguna Membuka Aplikasi"]) --> CheckLogin{"Status Autentikasi:<br/>Sudah Login?"}
     
-    %% Loop Logic
+    CheckLogin -- Belum --> LoginScreen["Tampilkan Form Login (Username & Password)"]
+    LoginScreen --> AuthVerify{"Validasi Kredensial Berhasil?"}
+    AuthVerify -- Gagal --> LoginScreen
+    AuthVerify -- Berhasil --> SetSession["Simpan Sesi Pengguna"]
+    
+    CheckLogin -- Sudah --> Input_Data
+    SetSession --> Input_Data["Input Data Fleksibel (CSV Pelanggan & GeoJSON Zona Wilayah Indonesia)"]
+
+    subgraph Input_Data ["Input & Konfigurasi Parameter"]
+        InputDepot["Koordinat Depot / Hub Logistik Awal"]
+        InputDest["Dataset CSV Pelanggan (Seluruh Indonesia)"]
+        InputVehCap["Kapasitas Armada (Motor, Van, Truk)"]
+    end
+
+    Input_Data --> InitPop["Inisialisasi Kromosom (Giant TSP Tour)"]
+    InitPop --> GenLimit{"Kriteria Berhenti<br/>Terpenuhi?"}
+    
+    subgraph GA_Loop ["Siklus Evolusi AI (Algoritma Genetika)"]
+        SplitAlg["Pemotongan Kromosom Berdasarkan Kapasitas Armada"]
+        EvalFitness["Evaluasi Fitness (Jarak Pendek & Efisiensi BBM)"]
+        CheckHazard{"Melalui Zona Hambatan/Kecelakaan?"}
+        AddPenaltyH["Terapkan Penalti Rute"]
+        CrossoverOp["Crossover & Mutasi Genetik"]
+        CreateOffspring["Hasilkan Generasi Baru"]
+    end
+
     GenLimit -- Tidak --> SplitAlg
     SplitAlg --> EvalFitness
     EvalFitness --> CheckHazard
@@ -106,23 +94,9 @@ graph TD
     MutationOp --> CreateOffspring
     CreateOffspring --> GenLimit
     
-    %% Termination Logic
-    GenLimit -- Ya --> GetBestR
-    GetBestR --> RenderMap
-    RenderMap --> End
-
-    %% Styling
-    classDef process fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
-    classDef inputout fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef loopsub fill:#f3e5f5,stroke:#7b1fa2,stroke-width:1px,stroke-dasharray: 5 5;
-    classDef startend fill:#ffccbc,stroke:#bf360c,stroke-width:2px,rx:10,ry:10;
-
-    class Start,End startend;
-    class InputDepot,InputDest,InputVehCap,InputHazard,GetBestR,RenderMap inputout;
-    class InitPop,SplitAlg,EvalFitness,AddPenaltyH,CrossoverOp,MutationOp,CreateOffspring process;
-    class GenLimit,CheckHazard decision;
-    class GA_Loop loopsub;
+    GenLimit -- Ya --> GetBestR["Ekstrak Rute Optimal Pengiriman"]
+    GetBestR --> RenderMap["Visualisasi Peta Digital Interaktif (Streamlit & Folium)"]
+    RenderMap --> End(["SELESAI"])
 ```
 
 # UML
