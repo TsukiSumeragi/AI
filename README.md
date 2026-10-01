@@ -1,8 +1,5 @@
 # ERD
-
-
-```mermaid
-erDiagram
+```mermaiderDiagram
     %% --- Dataset Input (Berdasarkan CSV & GeoJSON) ---
     PELANGGAN {
         string id PK "id / nama_pelanggan"
@@ -52,7 +49,9 @@ erDiagram
     ARMADA_KENDARAAN ||--o{ RUTE_OPTIMAL : "menjalankan"
     RUTE_OPTIMAL ||--|{ JADWAL_KUNJUNGAN : "terdiri_dari"
     PELANGGAN ||--o{ JADWAL_KUNJUNGAN : "dikunjungi_pada"
-```# FLOW SISTEM
+```
+
+# FLOW SISTEM
 
 ```mermaid
 graph TD
