@@ -1,5 +1,6 @@
 # ERD
-```mermaiderDiagram
+```mermaid
+erDiagram
     %% --- Dataset Input (Berdasarkan CSV & GeoJSON) ---
     PELANGGAN {
         string id PK "id / nama_pelanggan"
