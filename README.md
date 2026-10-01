@@ -1,4 +1,58 @@
-# FLOW SISTEM
+# ERD
+
+
+```mermaid
+erDiagram
+    %% --- Dataset Input (Berdasarkan CSV & GeoJSON) ---
+    PELANGGAN {
+        string id PK "id / nama_pelanggan"
+        decimal latitude
+        decimal longitude
+        decimal demand "Berat muatan paket (kg)"
+    }
+
+    ZONA_MACET {
+        int zona_id PK
+        string nama_zona "Kawasan Tol Bitung"
+        string path_file_geojson "Koordinat poligon spasial"
+    }
+
+    %% --- Master Data Armada (Baru) ---
+    JENIS_KENDARAAN {
+        int tipe_id PK
+        string nama_tipe "Motor, Mobil Van, Truk Kargo"
+        decimal kapasitas_maksimal_kg "Batas muatan spesifik tipe"
+        decimal koefisien_bbm "Tingkat konsumsi bahan bakar"
+    }
+
+    ARMADA_KENDARAAN {
+        string armada_id PK "Plat Nomor / ID"
+        int tipe_id FK
+        string status_aktif
+    }
+
+    %% --- Output Optimasi ---
+    RUTE_OPTIMAL {
+        int rute_id PK
+        string armada_id FK
+        decimal estimasi_waktu 
+        decimal total_jarak 
+        decimal estimasi_biaya_bbm "Dihitung dari koefisien_bbm"
+    }
+
+    JADWAL_KUNJUNGAN {
+        int jadwal_id PK
+        int rute_id FK
+        string pelanggan_id FK
+        int urutan_pengiriman
+    }
+
+    %% --- Relasi ---
+    JENIS_KENDARAAN ||--o{ ARMADA_KENDARAAN : "diklasifikasikan_sebagai"
+    ARMADA_KENDARAAN ||--o{ RUTE_OPTIMAL : "menjalankan"
+    RUTE_OPTIMAL ||--|{ JADWAL_KUNJUNGAN : "terdiri_dari"
+    PELANGGAN ||--o{ JADWAL_KUNJUNGAN : "dikunjungi_pada"
+```# FLOW SISTEM
 
 ```mermaid
 graph TD
@@ -75,127 +129,80 @@ graph TD
 
 ```mermaid
 classDiagram
-    %% --- Stereotype Definitions ---
-    class `Boundary (Streamlit)` {
-        <<Boundary>>
-    }
-    class `Controller (GA Engine)` {
-        <<Control>>
-    }
-    class `Entity (Model)` {
-        <<Entity>>
-    }
-    class `Utility` {
-        <<Utility>>
+    %% --- Boundary (Antarmuka Pengguna) ---
+    class StreamlitDashboard {
+        +uploadDatasetCSV()
+        +uploadHazardGeoJSON()
+        +konfigurasiJumlahArmada(jumlahMotor, jumlahKargo)
+        +tampilkanJadwalKurir()
+        +tampilkanPetaLintasan()
     }
 
-    %% --- Class Definitions ---
-
-    class LogisticsDashboard {
-        -streamlit.sidebarInput inputs
-        -folium.Map mainMap
-        -List~RouteStop~ bestRoutes
-        +displayDashboard()
-        +getInputs() void
-        +renderMap(List~RouteStop~ routes) folium.Map "SKPL-F07"
-        +showMetrics(dist, cost) void
-        +handleOptimizeButtonClick() void
+    %% --- Controllers (Logika Utama & Pustaka) ---
+    class AlgoritmaGenetikaDEAP {
+        -int ukuranPopulasi
+        -float probabilitasCrossover
+        -float probabilitasMutasi
+        +inisialisasiKromosomGiantTSP()
+        +potongKromosomHeterogen(List~ArmadaKendaraan~ armadaTersedia)
+        +evaluasiFitness()
+        +terapkanPenaltiZonaMacet()
+        +crossover()
+        +mutation()
     }
 
-    class AlgorithmController {
-        -List~Node~ nodes
-        -double vehicleCapacity
-        -List~HazardZone~ hazards
-        -GeneticAlgorithmParams gaParams
-        +runOptimization() void "SKPL-F05"
-        +initializePopulation() void
-        +runSplitAlgorithm(List~Node~ giantTour) List~Route~
-        +calculateFitness(Individual ind) double
-        +calculateLoadFuelModel(Route r) double "LFCM"
+    %% --- Entities (Struktur Data & Inheritance Armada) ---
+    class Pelanggan {
+        -String idPelanggan
+        -Float latitude
+        -Float longitude
+        -Float demandKg
     }
 
-    class GeneticAlgorithm {
-        -List~Individual~ population
-        -double crossoverRate
-        -double mutationRate
-        +evaluatePopulation() void
-        +selectTournament() Individual
-        +performCrossover(Individual parent1, Individual parent2) Individual "Order Crossover"
-        +performMutation(Individual ind) void "Swap Mutation"
-        +checkTermination() boolean
+    class RuteKurir {
+        -List~Pelanggan~ urutanKunjungan
+        -Float estimasiWaktu
+        -Float jarakTempuh
+        -Float biayaOperasional
     }
 
-    class Individual {
-        -List~int~ chromosome "Permutation Encoding (Giant TSP Tour)"
-        -double fitnessScore
-        -List~Route~ routesCVRP
-        +getFitness() double
-        +setFitness(double score) void
+    class ArmadaKendaraan {
+        <<Abstract>>
+        -String idArmada
+        -Float kapasitasMaksKg
+        -Float rasioKonsumsiBBM
+        +hitungEstimasiBiaya(jarak, bebanKg) Float
     }
 
-    class Node {
-        -int id
-        -double latitude
-        -double longitude
-        -double demandKg "SKPL-F02"
-        -boolean isDepot "SKPL-F01"
-        +getCoordinates() Tuple~double~
+    class KurirMotor {
+        -Boolean bisaMasukGangSempit
+        +hitungEstimasiBiaya() Float
     }
 
-    class Vehicle {
-        -int id
-        -double capacityKg
-        -double emptyWeightKg
-        -double fuelModel
+    class KurirMobil {
+        -Float volumeBagasiKubik
+        +hitungEstimasiBiaya() Float
     }
 
-    class HazardZone {
-        -string name
-        -List~Tuple~double~~ polygonCoords "GeoJSON Polygon"
-        -double penaltyWeight "w_hz"
-        +intersects(List~Tuple~double~~ polyline) boolean
+    class TrukKargo {
+        -Boolean kenaAturanJamOperasional
+        -Float penaltiDimensiBesar
+        +hitungEstimasiBiaya() Float
     }
 
-    class Route {
-        -int vehicleId
-        -List~Node~ orderedNodes
-        -double totalDistance
-        -double totalLoad
-        +addNode(Node n) void
-    }
-
-    class CalculatorUtilities {
-        +haversineDistance(Lat1, Lon1, Lat2, Lon2) double
-        +geodesicDistance(Lat1, Lon1, Lat2, Lon2) double "SKPL-NF01"
-        +loadDependentFuel(Route route, Vehicle vehicle) double "PRP Model"
-    }
-
-    %% --- Stereotype Assignments ---
-    %% Assign classes to their respective stereotyps for visualization
-    <<Boundary>> LogisticsDashboard
-    <<Control>> AlgorithmController
-    <<Control>> GeneticAlgorithm
-    <<Entity>> Individual
-    <<Entity>> Node
-    <<Entity>> Vehicle
-    <<Entity>> HazardZone
-    <<Entity>> Route
-    <<Utility>> CalculatorUtilities
-
-    %% --- Relationships ---
-    %% Association (Uses)
-    LogisticsDashboard ..> AlgorithmController : "Triggers"
-    LogisticsDashboard ..> CalculatorUtilities : "Uses for final display"
-    AlgorithmController ..> GeneticAlgorithm : "Orchestrates"
-    AlgorithmController ..> CalculatorUtilities : "Uses for matrices & fuel"
-
-    %% Composition (Part of)
-    GeneticAlgorithm "1" *-- "many" Individual : "Maintains Population"
-    Individual "1" *-- "many" Route : "Consists of (Split Result)"
-    Route "1" *-- "many" Node : "Services"
-    AlgorithmController "1" *-- "many" Node : "Processes"
-    AlgorithmController "1" *-- "many" HazardZone : "Considers for Penalty"
-    AlgorithmController "1" *-- "many" Vehicle : "Constraints by"
+    %% --- Relasi ---
+    StreamlitDashboard --> AlgoritmaGenetikaDEAP : "Memicu proses evolusi"
+    
+    AlgoritmaGenetikaDEAP --> RuteKurir : "Menghasilkan rute optimal"
+    AlgoritmaGenetikaDEAP o-- ArmadaKendaraan : "Menggunakan daftar armada"
+    
+    RuteKurir *-- Pelanggan : "Berisi titik kunjungan"
+    RuteKurir --> ArmadaKendaraan : "Dugaskan kepada"
+    
+    %% Relasi Pewarisan (Inheritance)
+    ArmadaKendaraan <|-- KurirMotor
+    ArmadaKendaraan <|-- KurirMobil
+    ArmadaKendaraan <|-- TrukKargo
 ```
 
 # SKEMA BASIS DATA
